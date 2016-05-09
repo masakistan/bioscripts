@@ -14,9 +14,9 @@ def main( args ):
 
     counter = 0
     for idx, char in enumerate( tree ):
-        if char == ')':
+        if char == ':':
             with open( args.out_prefix + "_" + str( counter ), 'w' ) as fh:
-                fh.write( tree[ : idx + 1 ] + "#1" + tree[ idx + 1 : ] )
+                fh.write( tree[ : idx ] + "#1" + tree[ idx : ] )
             counter += 1
 
     print "Created " + str( counter ) + " trees!"
