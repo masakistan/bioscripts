@@ -16,7 +16,7 @@ def main( args ):
     for idx, char in enumerate( tree ):
         if char == ':':
             with open( args.out_prefix + "_" + str( counter ), 'w' ) as fh:
-                fh.write( tree[ : idx ] + "#1" + tree[ idx : ] )
+                fh.write( tree[ : idx ] + " #1 " + tree[ idx : ] )
             counter += 1
 
     print "Created " + str( counter ) + " trees!"
