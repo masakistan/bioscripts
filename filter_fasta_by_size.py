@@ -5,6 +5,7 @@ def main( args ):
     with open( args.fasta ) as fh:
         head = ""
         seq = ""
+        counter = 0
 
         for line in fh:
             if line[ 0 ] == '>':
@@ -12,6 +13,8 @@ def main( args ):
                 if len( seq ) > 0 and len( seq ) >= args.len:
                    print head
                    print seq
+                else:
+                   counter += 1
 
                 head = line.strip()
                 seq = ""
@@ -21,6 +24,10 @@ def main( args ):
         if len( seq ) > 0 and len( seq ) >= args.len:
             print head
             print seq
+        else:
+            counter += 1
+
+        sys.stderr.write( "Removed " + str( counter ) + " sequences\n" )
 
 
 if __name__ == "__main__":
