@@ -20,10 +20,13 @@ def fix_dup( head, name, seq ):
 def fix_trim( head, name, seq ):
     coords = trim[ name ]
 
+    #sys.stderr.write( "Trimming: " + name + "\n" )
     for coord in coords:
         left, right = coord
         #print "\t", left, right
         seq = seq[ : left ] + seq[ right : ]
+        sys.stderr.write( "Trimming " + name + " at positions " + str( left ) + " to " + str( right ) + "\n" )
+
 
     print '>' + head
     print fix_seq( seq )
@@ -37,12 +40,24 @@ def check_seq( head, seq ):
 
     if name in exclude:
         sys.stderr.write( "Excluding: " + name + "\n" )
+        del exclude[ exclude.index( name ) ]
+
+        if name in trim:
+            sys.stderr.write( "\tAlso should be trimmed?\n" )
+        if name in duplicate:
+            sys.stderr.write( "\tAlso a duplicate?\n" )
+        #sys.stderr.write( "exclude size: " + str( len( exclude ) ) + "\n" )
         return
 
     if name in trim:
         fix_trim( head, name, seq )
+        del trim[ name ]
+        #sys.stderr.write( "trim size: " + str( len( trim ) ) + "\n" )
+
     elif name in duplicate:
         fix_dup( head, name, seq )
+        del duplicate[ name ]
+        #sys.stderr.write( "dup size: " + str( len( duplicate ) ) + "\n" )
     else:
         print '>' + head
         print fix_seq( seq )
@@ -88,6 +103,7 @@ def main( args ):
     for idx in range( len( exclude ) ):
         exclude[ idx ] = exclude[ idx ].split( '\t' )[ 0 ]
 
+    sys.stderr.write( "Read in " + str( len( exclude ) ) + " exclude records.\n" )
     #print exclude
     #print "*" * 20
 
@@ -103,8 +119,13 @@ def main( args ):
             coords.append( entry )
 
         #trim[ idx ] = ( parsed[ 0 ], coords )
-        t_trim[ parsed[ 0 ] ] = coords
+        if parsed[ 0 ] in t_trim:
+            t_trim[ parsed[ 0 ] ].extend( coords )
+        else:
+            t_trim[ parsed[ 0 ] ] = coords
     trim = t_trim
+
+    sys.stderr.write( "Read in " + str( len( trim ) ) + " trim records.\n" )
 
     #print trim
     #print "*" * 20
@@ -135,6 +156,8 @@ def main( args ):
         t_dup[ right[ 0 ] ] = ( right, left )
     duplicate_processed = duplicate
     duplicate = t_dup
+
+    sys.stderr.write( "Read in " + str( len( duplicate ) ) + " duplicate records.\n" )
 
     #for dup in duplicate:
     #    print dup
@@ -169,6 +192,18 @@ def main( args ):
             fh.write( '>' + right_head + "\n" + right_seq + "\n" )
 
         counter += 1
+
+    # print the leftover sequences
+    sys.stderr.write( "The following sequences were referenced in the FCS Report but not found in the provided FASTA file.\n" )
+    sys.stderr.write( "Exclude:\n")
+    for i in exclude:
+        sys.stderr.write( "\t" + i + "\n" )
+    sys.stderr.write( "Trim:\n" )
+    for i in trim.keys():
+        sys.stderr.write( "\t" + i + "\n" )
+    sys.stderr.write( "Duplicate:\n" )
+    for i in duplicate.keys():
+        sys.stderr.write( "\t" + i + "\n" )
         
 
 
