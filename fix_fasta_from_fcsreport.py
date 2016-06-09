@@ -63,6 +63,23 @@ def check_seq( head, seq ):
         print fix_seq( seq )
 
 
+def check_trim():
+    #sys.stderr.write( trim )
+    for seq, coords in trim.iteritems():
+        #sys.stderr.write( seq + "\n" )
+        if len( coords ) > 1:
+            trim[ seq ] = sorted( coords, key = lambda x: x[ 0 ], reverse = True )
+            coords = trim[ seq ]
+            for idx, coord in enumerate( coords ):
+                #sys.stderr.write( "\t" + str( coord ) + "\n" )
+                if idx == 0:
+                    continue
+                if coord[ 1 ] >= coords[ idx - 1 ][ 0 ]:
+                    sys.stderr.write( "Overlap!\n" )
+                    sys.stderr.write( "\tContinuing, but there will be inappropriate regions of sequence " + seq + " removed!\n" )
+                    sys.stderr.write( "\t" + str( coords[ idx - 1 ] ) + "\t" + str( coord )  + "\n" )
+
+
 def main( args ):
     # parse the fcs report
     global trim
@@ -109,6 +126,7 @@ def main( args ):
 
     # fix trim
     t_trim = dict()
+    trim_count = 0
     for idx in range( len( trim ) ):
         parsed = trim[ idx ].split( '\t' )
         coords = []
@@ -121,11 +139,20 @@ def main( args ):
         #trim[ idx ] = ( parsed[ 0 ], coords )
         if parsed[ 0 ] in t_trim:
             t_trim[ parsed[ 0 ] ].extend( coords )
+            trim_count += len( coords )
         else:
             t_trim[ parsed[ 0 ] ] = coords
+            trim_count += len( coords )
     trim = t_trim
 
-    sys.stderr.write( "Read in " + str( len( trim ) ) + " trim records.\n" )
+    # validate the trim records
+    # check to see if any of the coordinates overlap, if they do something weird could happen
+    # also, we should sort the trimmed sections so that they're removed from the end of the
+    # sequence to the front as to avoid ruining
+    check_trim()
+
+    sys.stderr.write( "Read in " + str( len( trim ) ) + " sequences to trim records.\n" )
+    sys.stderr.write( "\tWill execute " + str( trim_count ) + " edits.\n" ) 
 
     #print trim
     #print "*" * 20
@@ -179,8 +206,8 @@ def main( args ):
 
     counter = 0
     for dup in duplicate_processed:
-        sys.stderr.write( str( dup ) + "\n" )
-        with open( "dup_seqs." + str( counter ) + ".fa", 'w' ) as fh:
+        sys.stderr.write( "dup seqs " + str( dup[ 0 ][ 0 ] ) + " and " + str( dup[ 1 ][ 0 ] ) + ".\n" )
+        with open( args.dups_dir + "/dup_seqs." + str( counter ) + ".fa", 'w' ) as fh:
             left_name = dup[ 0 ][ 0 ]
             left_head = dup_seqs[ left_name ][ 0 ]
             left_seq = dup_seqs[ left_name ][ 1 ]
@@ -218,6 +245,10 @@ if __name__ == "__main__":
     parser.add_argument( "--fcsreport",
             required = True,
             help = "The NCBI FCS Report."
+            )
+    parser.add_argument( "--dups_dir",
+            help = "The directory where to put the duplicated sequences. Default = .",
+            default = '.'
             )
     args = parser.parse_args()
     main( args )
