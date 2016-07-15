@@ -6,18 +6,25 @@ def main( args ):
         head = ""
         seq = ""
         counter = 0
+        removed = []
 
+        processed = 0
         for line in fh:
             if line[ 0 ] == '>':
 
                 if len( seq ) > 0 and len( seq ) >= args.len:
-                   print head
-                   print seq
+                    print head
+                    print seq
                 else:
-                   counter += 1
+                    if processed > 0:
+
+                        counter += 1
+                        sys.stederr.write( line + "\n" )
+                        removed.append( head )
 
                 head = line.strip()
                 seq = ""
+                processed += 1
             else:
                 seq += line.strip()
 
@@ -26,8 +33,11 @@ def main( args ):
             print seq
         else:
             counter += 1
+            removed.append( head )
 
         sys.stderr.write( "Removed " + str( counter ) + " sequences\n" )
+        for i in removed:
+            sys.stderr.write( "\t" + i + "\n" )
 
 
 if __name__ == "__main__":
